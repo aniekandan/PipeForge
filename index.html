@@ -1,6 +1,46 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <script>
+      (function () {
+        function isIgnorable(err) {
+          if (!err) return false;
+          var msg = typeof err === 'string' ? err : err.message || (err.reason && (err.reason.message || err.reason)) || '';
+          if (typeof msg !== 'string') {
+            try { msg = JSON.stringify(err); } catch (e) { msg = ''; }
+          }
+          return (
+            msg.indexOf('chrome: call method') !== -1 ||
+            msg.indexOf('chrome:') !== -1 ||
+            msg.indexOf('Extension context') !== -1 ||
+            msg.indexOf('message channel closed') !== -1 ||
+            msg.indexOf('ResizeObserver loop') !== -1
+          );
+        }
+
+        window.addEventListener(
+          'unhandledrejection',
+          function (e) {
+            if (isIgnorable(e.reason) || isIgnorable(e)) {
+              e.preventDefault();
+              e.stopImmediatePropagation();
+            }
+          },
+          true
+        );
+
+        window.addEventListener(
+          'error',
+          function (e) {
+            if (isIgnorable(e.message) || isIgnorable(e.error) || isIgnorable(e)) {
+              e.preventDefault();
+              e.stopImmediatePropagation();
+            }
+          },
+          true
+        );
+      })();
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -17,4 +57,3 @@
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-
