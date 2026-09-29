@@ -102,13 +102,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await viewModel.executeImportFileWithDescriptor(descriptor, projectService);
   };
 
-  const resetAllData = () => {
-    localStorage.clear();
+  const resetAllData = async () => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.clear();
+    }
     if (store.clearAll) {
-      store.clearAll().catch(console.error);
+      await store.clearAll().catch(console.error);
     }
     projectService.forceClose('');
-    window.location.reload();
+    await viewModel.refreshRecentProjects();
   };
 
   return (

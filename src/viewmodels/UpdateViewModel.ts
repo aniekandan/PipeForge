@@ -415,12 +415,10 @@ export class UpdateViewModel {
   }
 
   /**
-   * UC10-S4: Open Release Page in Web Browser
+   * UC10-S4: Release notes URL accessor
    */
-  public openReleaseNotes(): void {
-    if (this._pendingUpdate?.releaseNotesUrl && typeof window !== 'undefined') {
-      window.open(this._pendingUpdate.releaseNotesUrl, '_blank', 'noopener,noreferrer');
-    }
+  public get releaseNotesUrl(): string | null {
+    return this._pendingUpdate?.releaseNotesUrl || null;
   }
 
   /**

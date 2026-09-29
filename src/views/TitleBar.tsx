@@ -5,9 +5,8 @@
 
 import {
   AlertCircle,
-  CheckCircle2,
+  Copy,
   Database,
-  Download,
   Loader2,
   Minus,
   RefreshCw,
@@ -16,7 +15,7 @@ import {
   Square,
   X,
 } from 'lucide-react';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext.tsx';
 import { UpdateState } from '../domain/UpdateTypes.ts';
 import { SessionState } from '../viewmodels/types.ts';
@@ -28,6 +27,38 @@ interface TitleBarProps {
 
 export const TitleBar: React.FC<TitleBarProps> = ({ sessionState, projectName }) => {
   const { updateViewModel, viewModel } = useApp();
+  const [isMaximized, setIsMaximized] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.electronAPI?.isMaximized) {
+      window.electronAPI.isMaximized().then((max) => {
+        setIsMaximized(Boolean(max));
+      }).catch(() => {});
+    }
+  }, []);
+
+  const handleMinimize = () => {
+    if (typeof window !== 'undefined' && window.electronAPI?.minimizeWindow) {
+      window.electronAPI.minimizeWindow();
+    }
+  };
+
+  const handleMaximize = async () => {
+    if (typeof window !== 'undefined' && window.electronAPI?.maximizeWindow) {
+      try {
+        const nextState = await window.electronAPI.maximizeWindow();
+        setIsMaximized(Boolean(nextState));
+      } catch {
+        // fallback
+      }
+    }
+  };
+
+  const handleClose = () => {
+    if (typeof window !== 'undefined' && window.electronAPI?.closeWindow) {
+      window.electronAPI.closeWindow();
+    }
+  };
 
   const {
     currentVersion,
@@ -36,9 +67,22 @@ export const TitleBar: React.FC<TitleBarProps> = ({ sessionState, projectName })
     downloadProgressPercent,
   } = updateViewModel;
 
+  // CSS drag helper for Electron window
+  const dragStyle = {
+    WebkitAppRegion: 'drag',
+  } as React.CSSProperties;
+  const noDragStyle = {
+    WebkitAppRegion: 'no-drag',
+  } as React.CSSProperties;
+
   return (
-    <div className="flex h-10 w-full select-none items-center justify-between border-b border-slate-200 bg-white px-3 text-xs text-slate-700 shadow-2xs">
-      <div className="flex items-center space-x-2">
+    <header
+      style={dragStyle}
+      onDoubleClick={handleMaximize}
+      className="flex h-10 w-full select-none items-center justify-between border-b border-slate-200 bg-white px-3 text-xs text-slate-700 shadow-2xs cursor-default"
+    >
+      {/* Left Branding & Active Project */}
+      <div className="flex items-center space-x-2" style={noDragStyle}>
         <div className="flex h-5.5 w-5.5 items-center justify-center rounded bg-emerald-100 text-emerald-700 border border-emerald-200">
           <Database className="h-3.5 w-3.5" />
         </div>
@@ -56,7 +100,8 @@ export const TitleBar: React.FC<TitleBarProps> = ({ sessionState, projectName })
         )}
       </div>
 
-      <div className="flex items-center space-x-2.5">
+      {/* Right Controls & Interactive Elements */}
+      <div className="flex items-center space-x-2.5" style={noDragStyle}>
         {/* Update Status Badge / Interactive Trigger */}
         {updateState === UpdateState.Checking && (
           <div className="flex items-center space-x-1.5 rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-[11px] text-slate-600">
@@ -139,31 +184,38 @@ export const TitleBar: React.FC<TitleBarProps> = ({ sessionState, projectName })
           <Settings className="h-3.5 w-3.5" />
         </button>
 
-        {/* Desktop window controls simulation */}
+        {/* Native frameless window controls */}
         <div className="flex items-center space-x-1 border-l border-slate-200 pl-2">
           <button
             type="button"
-            className="flex h-6 w-6 items-center justify-center rounded text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors"
+            onClick={handleMinimize}
+            className="flex h-6 w-6 items-center justify-center rounded text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
             title="Minimize"
           >
             <Minus className="h-3 w-3" />
           </button>
           <button
             type="button"
-            className="flex h-6 w-6 items-center justify-center rounded text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors"
-            title="Maximize"
+            onClick={handleMaximize}
+            className="flex h-6 w-6 items-center justify-center rounded text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
+            title={isMaximized ? 'Restore Down' : 'Maximize'}
           >
-            <Square className="h-2.5 w-2.5" />
+            {isMaximized ? (
+              <Copy className="h-2.5 w-2.5" />
+            ) : (
+              <Square className="h-2.5 w-2.5" />
+            )}
           </button>
           <button
             type="button"
-            className="flex h-6 w-6 items-center justify-center rounded text-slate-500 hover:bg-rose-600 hover:text-white transition-colors"
+            onClick={handleClose}
+            className="flex h-6 w-6 items-center justify-center rounded text-slate-500 hover:bg-rose-600 hover:text-white transition-colors cursor-pointer"
             title="Close"
           >
             <X className="h-3 w-3" />
           </button>
         </div>
       </div>
-    </div>
+    </header>
   );
 };

@@ -205,14 +205,21 @@ export const SettingsModal: React.FC = () => {
 
                   {/* Actions depending on UpdateState */}
                   <div className="flex items-center space-x-2 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => updateViewModel.openReleaseNotes()}
-                      className="flex items-center space-x-1 text-xs font-medium text-emerald-700 hover:text-emerald-900 underline underline-offset-2 cursor-pointer"
-                    >
-                      <span>Release Notes</span>
-                      <ExternalLink className="h-3 w-3" />
-                    </button>
+                    {pendingUpdate.releaseNotesUrl && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (navigator.clipboard) {
+                            navigator.clipboard.writeText(pendingUpdate.releaseNotesUrl);
+                          }
+                        }}
+                        className="flex items-center space-x-1 text-xs font-medium text-emerald-700 hover:text-emerald-900 underline underline-offset-2 cursor-pointer"
+                        title="Copy GitHub Release URL to clipboard"
+                      >
+                        <span>Release URL</span>
+                        <ExternalLink className="h-3 w-3" />
+                      </button>
+                    )}
 
                     {isAvailable && (
                       <button

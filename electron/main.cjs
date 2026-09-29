@@ -1,12 +1,15 @@
 /**
  * Electron Main Process Entry
- * Manages native desktop window, IPC channels, physical file system persistence,
+ * Manages native frameless desktop window, IPC channels, physical file system persistence,
  * and automatic .pipeforge file association handlers.
  */
 
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs/promises');
+
+// Remove default Windows / Electron application menu bar (File, Edit, View, Help, etc.)
+Menu.setApplicationMenu(null);
 
 let mainWindow = null;
 let initialFilePath = null;
@@ -65,6 +68,9 @@ if (!gotTheLock) {
       title: 'PipeForge',
       backgroundColor: '#f9fbfd',
       icon: path.join(__dirname, '../public/favicon.ico'),
+      frame: false, // Removes default OS window frame / chrome
+      autoHideMenuBar: true, // Hides default OS menu bar
+      titleBarStyle: 'hidden', // Uses custom in-app title bar
       webPreferences: {
         preload: path.join(__dirname, 'preload.cjs'),
         contextIsolation: true,
@@ -77,6 +83,38 @@ if (!gotTheLock) {
       const file = initialFilePath;
       initialFilePath = null; // consume once
       return file;
+    });
+
+    // Window controls for custom in-app TitleBar
+    ipcMain.handle('window:minimize', () => {
+      if (mainWindow) {
+        mainWindow.minimize();
+      }
+    });
+
+    ipcMain.handle('window:maximize', () => {
+      if (mainWindow) {
+        if (mainWindow.isMaximized()) {
+          mainWindow.unmaximize();
+        } else {
+          mainWindow.maximize();
+        }
+      }
+      return mainWindow ? mainWindow.isMaximized() : false;
+    });
+
+    ipcMain.handle('window:isMaximized', () => {
+      return mainWindow ? mainWindow.isMaximized() : false;
+    });
+
+    ipcMain.handle('window:close', () => {
+      if (mainWindow) {
+        mainWindow.close();
+      }
+    });
+
+    ipcMain.handle('app:quitAndInstall', () => {
+      app.quit();
     });
 
     // Handle native OS open file dialog

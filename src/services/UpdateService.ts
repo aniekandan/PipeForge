@@ -140,10 +140,7 @@ export class UpdateService implements IUpdateService {
       }
     }
 
-    // In web runtime, simulate quick app relaunch
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-    if (typeof window !== 'undefined') {
-      window.location.reload();
-    }
+    // In web runtime, simulate quick app relaunch delay
+    await new Promise((resolve) => setTimeout(resolve, 800));
   }
 }

@@ -17,6 +17,11 @@ declare global {
       writeFile?: (filePath: string, data: Uint8Array | ArrayBuffer) => Promise<boolean>;
       deleteFile?: (filePath: string) => Promise<boolean>;
       getInitialFile?: () => Promise<string | null>;
+      minimizeWindow?: () => Promise<void>;
+      maximizeWindow?: () => Promise<boolean>;
+      isMaximized?: () => Promise<boolean>;
+      closeWindow?: () => Promise<void>;
+      quitAndInstall?: () => Promise<void>;
       onOpenFile?: (callback: (filePath: string) => void) => () => void;
     };
     showDirectoryPicker?: () => Promise<any>;
@@ -26,7 +31,7 @@ declare global {
 export class UniversalFilePickerService implements IFilePickerService {
   public async pickFile(filters?: string[]): Promise<FileDescriptor | null> {
     // 1. Electron Native Path
-    if (window.electronAPI?.showOpenDialog && window.electronAPI?.readFile) {
+    if (typeof window !== 'undefined' && window.electronAPI?.showOpenDialog && window.electronAPI?.readFile) {
       try {
         const result = await window.electronAPI.showOpenDialog({
           filters: [
@@ -117,21 +122,6 @@ export class UniversalFilePickerService implements IFilePickerService {
       } catch (err) {
         console.error('Failed to select directory via Electron:', err);
       }
-    }
-
-    // 2. Browser File System Access API (Chrome/Edge) - only in top-level window if permitted
-    try {
-      if (
-        typeof window !== 'undefined' &&
-        window.self === window.top &&
-        typeof (window as any).showDirectoryPicker === 'function'
-      ) {
-        const dirHandle = await (window as any).showDirectoryPicker();
-        return `Documents\\PipeForge Projects\\${dirHandle.name}`;
-      }
-    } catch {
-      // Ignored or rejected by user/browser permissions
-      return null;
     }
 
     return null;

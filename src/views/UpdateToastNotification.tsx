@@ -61,8 +61,14 @@ export const UpdateToastNotification: React.FC = () => {
         <div className="mt-4 flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
           <button
             type="button"
-            onClick={() => updateViewModel.openReleaseNotes()}
+            onClick={() => {
+              if (pendingUpdate.releaseNotesUrl && navigator.clipboard) {
+                navigator.clipboard.writeText(pendingUpdate.releaseNotesUrl);
+              }
+              updateViewModel.openSettings();
+            }}
             className="flex items-center space-x-1 text-slate-600 hover:text-emerald-700 font-medium px-2 py-1 transition-colors cursor-pointer"
+            title="Copy release URL & open settings"
           >
             <span>Download manually</span>
             <ExternalLink className="h-3 w-3" />
