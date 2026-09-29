@@ -46,3 +46,11 @@ export class TableNotFoundError extends AppError {
 export class DuplicateProjectNameError extends AppError {
   readonly code = 'DUPLICATE_PROJECT_NAME';
 }
+
+export class UpdateCheckError extends AppError {
+  readonly code = 'UPDATE_CHECK_ERROR';
+}
+
+export class UpdateDownloadError extends AppError {
+  readonly code = 'UPDATE_DOWNLOAD_ERROR';
+}

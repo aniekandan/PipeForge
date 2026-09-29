@@ -5,15 +5,21 @@
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { IProjectStore } from '../persistence/IProjectStore.ts';
+import { LocalStorageSettingsStore } from '../persistence/LocalStorageSettingsStore.ts';
 import { ProjectStoreFactory } from '../persistence/ProjectStoreFactory.ts';
 import { FileImportService } from '../services/FileImportService.ts';
 import { FileDescriptor } from '../services/IFilePickerService.ts';
+import { IUpdateService } from '../services/IUpdateService.ts';
 import { ProjectService } from '../services/ProjectService.ts';
 import { UniversalFilePickerService } from '../services/UniversalFilePickerService.ts';
+import { UpdateService } from '../services/UpdateService.ts';
 import { ShellViewModel } from '../viewmodels/ShellViewModel.ts';
+import { UpdateViewModel } from '../viewmodels/UpdateViewModel.ts';
 
 interface AppContextValue {
   viewModel: ShellViewModel;
+  updateViewModel: UpdateViewModel;
+  updateService: IUpdateService;
   store: IProjectStore & {
     setSimulateWriteFailure: (fail: boolean) => void;
     isSimulatingWriteFailure: boolean;
@@ -34,22 +40,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const projectService = useMemo(() => new ProjectService(store, importService), [store, importService]);
   const viewModel = useMemo(() => new ShellViewModel(projectService, filePicker), [projectService, filePicker]);
 
+  const settingsStore = useMemo(() => new LocalStorageSettingsStore(), []);
+  const updateService = useMemo(() => new UpdateService(), []);
+  const updateViewModel = useMemo(
+    () => new UpdateViewModel({ updateService, settingsStore }),
+    [updateService, settingsStore]
+  );
+
   const [, setTick] = useState(0);
   const [simulateStoreWriteFailure, setSimulateFailureState] = useState(false);
 
   useEffect(() => {
-    // Subscribe to ShellViewModel state transitions
-    const unsubscribe = viewModel.subscribe(() => {
+    // Subscribe to ShellViewModel & UpdateViewModel state transitions
+    const unsubscribeShell = viewModel.subscribe(() => {
+      setTick((prev) => prev + 1);
+    });
+
+    const unsubscribeUpdate = updateViewModel.subscribe(() => {
       setTick((prev) => prev + 1);
     });
 
     // Check if launched directly with a .pipeforge or data file via OS file association
     if (typeof window !== 'undefined' && window.electronAPI?.getInitialFile) {
-      window.electronAPI.getInitialFile().then((filePath) => {
-        if (filePath) {
-          viewModel.openFileFromNativePath(filePath);
-        }
-      }).catch(console.error);
+      window.electronAPI
+        .getInitialFile()
+        .then((filePath) => {
+          if (filePath) {
+            viewModel.openFileFromNativePath(filePath);
+          }
+        })
+        .catch(console.error);
     }
 
     // Listen for live file-open events when user double-clicks files while app is open
@@ -63,12 +83,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     return () => {
-      unsubscribe();
+      unsubscribeShell();
+      unsubscribeUpdate();
+      updateViewModel.destroy();
       if (cleanupFileListener) {
         cleanupFileListener();
       }
     };
-  }, [viewModel]);
+  }, [viewModel, updateViewModel]);
 
   const setSimulateStoreWriteFailure = (fail: boolean) => {
     store.setSimulateWriteFailure(fail);
@@ -93,6 +115,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     <AppContext.Provider
       value={{
         viewModel,
+        updateViewModel,
+        updateService,
         store,
         importWithSampleFile,
         simulateStoreWriteFailure,

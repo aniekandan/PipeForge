@@ -3,8 +3,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Database, Minus, Square, X } from 'lucide-react';
+import {
+  AlertCircle,
+  CheckCircle2,
+  Database,
+  Download,
+  Loader2,
+  Minus,
+  RefreshCw,
+  Settings,
+  Sparkles,
+  Square,
+  X,
+} from 'lucide-react';
 import React from 'react';
+import { useApp } from '../context/AppContext.tsx';
+import { UpdateState } from '../domain/UpdateTypes.ts';
 import { SessionState } from '../viewmodels/types.ts';
 
 interface TitleBarProps {
@@ -13,6 +27,15 @@ interface TitleBarProps {
 }
 
 export const TitleBar: React.FC<TitleBarProps> = ({ sessionState, projectName }) => {
+  const { updateViewModel, viewModel } = useApp();
+
+  const {
+    currentVersion,
+    updateState,
+    pendingUpdate,
+    downloadProgressPercent,
+  } = updateViewModel;
+
   return (
     <div className="flex h-10 w-full select-none items-center justify-between border-b border-slate-200 bg-white px-3 text-xs text-slate-700 shadow-2xs">
       <div className="flex items-center space-x-2">
@@ -20,15 +43,75 @@ export const TitleBar: React.FC<TitleBarProps> = ({ sessionState, projectName })
           <Database className="h-3.5 w-3.5" />
         </div>
         <span className="font-semibold tracking-tight text-slate-900">PipeForge</span>
+        <span className="rounded bg-slate-100 border border-slate-200 px-1.5 py-0.2 text-[10px] font-mono text-slate-600">
+          v{currentVersion}
+        </span>
         {projectName && (
           <>
             <span className="text-slate-400">—</span>
-            <span className="rounded bg-slate-100 border border-slate-200 px-2 py-0.5 text-xs text-slate-800 font-medium">{projectName}</span>
+            <span className="rounded bg-slate-100 border border-slate-200 px-2 py-0.5 text-xs text-slate-800 font-medium">
+              {projectName}
+            </span>
           </>
         )}
       </div>
 
-      <div className="flex items-center space-x-3">
+      <div className="flex items-center space-x-2.5">
+        {/* Update Status Badge / Interactive Trigger */}
+        {updateState === UpdateState.Checking && (
+          <div className="flex items-center space-x-1.5 rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-[11px] text-slate-600">
+            <Loader2 className="h-3 w-3 animate-spin text-emerald-600" />
+            <span>Checking updates...</span>
+          </div>
+        )}
+
+        {updateState === UpdateState.Available && pendingUpdate && (
+          <button
+            type="button"
+            onClick={() => updateViewModel.openSettings()}
+            className="flex items-center space-x-1.5 rounded-full bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 px-2.5 py-0.5 text-[11px] text-emerald-800 font-semibold transition-colors cursor-pointer shadow-2xs animate-pulse"
+            title="Click to view update details"
+          >
+            <Sparkles className="h-3 w-3 text-emerald-600" />
+            <span>v{pendingUpdate.version} Available</span>
+          </button>
+        )}
+
+        {updateState === UpdateState.Downloading && (
+          <button
+            type="button"
+            onClick={() => updateViewModel.openSettings()}
+            className="flex items-center space-x-1.5 rounded-full bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 px-2.5 py-0.5 text-[11px] text-emerald-800 font-mono font-semibold transition-colors cursor-pointer"
+          >
+            <Loader2 className="h-3 w-3 animate-spin text-emerald-600" />
+            <span>Downloading {downloadProgressPercent}%</span>
+          </button>
+        )}
+
+        {updateState === UpdateState.Ready && (
+          <button
+            type="button"
+            onClick={() => updateViewModel.restartNow(viewModel)}
+            className="flex items-center space-x-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 px-2.5 py-0.5 text-[11px] text-white font-bold transition-all shadow-xs active:scale-95 cursor-pointer"
+            title="Click to restart and apply update"
+          >
+            <RefreshCw className="h-3 w-3" />
+            <span>Restart to Update</span>
+          </button>
+        )}
+
+        {updateState === UpdateState.DownloadFailed && (
+          <button
+            type="button"
+            onClick={() => updateViewModel.openSettings()}
+            className="flex items-center space-x-1.5 rounded-full bg-rose-50 border border-rose-300 hover:bg-rose-100 px-2.5 py-0.5 text-[11px] text-rose-800 font-semibold transition-colors cursor-pointer"
+            title="Download failed - click to retry"
+          >
+            <AlertCircle className="h-3 w-3 text-rose-600" />
+            <span>Download Failed</span>
+          </button>
+        )}
+
         {/* Session State Tag */}
         <div className="flex items-center space-x-1.5 rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-[11px]">
           <span
@@ -45,6 +128,16 @@ export const TitleBar: React.FC<TitleBarProps> = ({ sessionState, projectName })
           <span className="font-mono text-slate-500">State:</span>
           <span className="font-medium text-slate-800">{sessionState}</span>
         </div>
+
+        {/* Settings Button */}
+        <button
+          type="button"
+          onClick={() => updateViewModel.openSettings()}
+          className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer shadow-2xs"
+          title="Settings & Updates"
+        >
+          <Settings className="h-3.5 w-3.5" />
+        </button>
 
         {/* Desktop window controls simulation */}
         <div className="flex items-center space-x-1 border-l border-slate-200 pl-2">

@@ -367,6 +367,57 @@ export class ShellViewModel {
   }
 
   /**
+   * UC3 & UC11: Closes active project safely before applying software update
+   */
+  public async executeCloseProjectForUpdate(): Promise<boolean> {
+    if (!this._currentProject) return true;
+
+    const projectId = this._currentProject.id;
+    this._errorMessage = null;
+    this._sessionState = SessionState.Closing;
+    this.notify();
+
+    try {
+      await this._projectService.close(projectId);
+      this._currentProject = null;
+      this._sessionState = SessionState.Idle;
+      await this.refreshRecentProjects();
+      this.notify();
+      return true;
+    } catch (err) {
+      const errorMsg =
+        err instanceof StoreWriteError
+          ? err.message
+          : 'Failed to write project state to disk. Changes may be lost.';
+
+      return new Promise<boolean>((resolve) => {
+        this._activeCloseFailureDialog = new CloseFailureDialogViewModel(
+          projectId,
+          errorMsg,
+          this._projectService,
+          async (result: CloseFailureResult) => {
+            this._activeCloseFailureDialog = null;
+            if (result === 'closed') {
+              this._currentProject = null;
+              this._sessionState = SessionState.Idle;
+              await this.refreshRecentProjects();
+              this.notify();
+              resolve(true);
+            } else {
+              this._sessionState = SessionState.ProjectOpen;
+              this.notify();
+              resolve(false);
+            }
+          },
+          () => this.notify()
+        );
+        this._sessionState = SessionState.ProjectOpen;
+        this.notify();
+      });
+    }
+  }
+
+  /**
    * Triggers download of the .pipeforge project package to user's physical filesystem
    */
   public async executeExportProject(projectId: string): Promise<void> {

@@ -11,7 +11,10 @@ import { OpenProjectModal } from './views/OpenProjectModal.tsx';
 import { ProjectImportWizardModal } from './views/ProjectImportWizardModal.tsx';
 import { ProjectLoadedView } from './views/ProjectLoadedView.tsx';
 import { SampleFilesBar } from './views/SampleFilesBar.tsx';
+import { SettingsModal } from './views/SettingsModal.tsx';
 import { TitleBar } from './views/TitleBar.tsx';
+import { UpdateReadyModal } from './views/UpdateReadyModal.tsx';
+import { UpdateToastNotification } from './views/UpdateToastNotification.tsx';
 
 const AppShell: React.FC = () => {
   const { viewModel } = useApp();
@@ -46,6 +49,15 @@ const AppShell: React.FC = () => {
         {viewModel.activeCloseFailureDialog && (
           <CloseFailureModal dialog={viewModel.activeCloseFailureDialog} />
         )}
+
+        {/* Modal: Sprint 3 Settings Modal */}
+        <SettingsModal />
+
+        {/* Modal: Sprint 3 Update Ready to Restart Dialog */}
+        <UpdateReadyModal />
+
+        {/* Toast: Sprint 3 Floating Update Notifications */}
+        <UpdateToastNotification />
       </main>
 
       {/* Test Harness & Scenario Fixtures Bar */}
