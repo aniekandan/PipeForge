@@ -30,7 +30,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({ sessionState, projectName })
   const [isMaximized, setIsMaximized] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.electronAPI?.isMaximized) {
+    if (typeof window !== 'undefined' && typeof window.electronAPI?.isMaximized === 'function') {
       window.electronAPI.isMaximized().then((max) => {
         setIsMaximized(Boolean(max));
       }).catch(() => {});
@@ -38,13 +38,13 @@ export const TitleBar: React.FC<TitleBarProps> = ({ sessionState, projectName })
   }, []);
 
   const handleMinimize = () => {
-    if (typeof window !== 'undefined' && window.electronAPI?.minimizeWindow) {
-      window.electronAPI.minimizeWindow();
+    if (typeof window !== 'undefined' && typeof window.electronAPI?.minimizeWindow === 'function') {
+      window.electronAPI.minimizeWindow().catch(() => {});
     }
   };
 
   const handleMaximize = async () => {
-    if (typeof window !== 'undefined' && window.electronAPI?.maximizeWindow) {
+    if (typeof window !== 'undefined' && typeof window.electronAPI?.maximizeWindow === 'function') {
       try {
         const nextState = await window.electronAPI.maximizeWindow();
         setIsMaximized(Boolean(nextState));
@@ -55,8 +55,8 @@ export const TitleBar: React.FC<TitleBarProps> = ({ sessionState, projectName })
   };
 
   const handleClose = () => {
-    if (typeof window !== 'undefined' && window.electronAPI?.closeWindow) {
-      window.electronAPI.closeWindow();
+    if (typeof window !== 'undefined' && typeof window.electronAPI?.closeWindow === 'function') {
+      window.electronAPI.closeWindow().catch(() => {});
     }
   };
 

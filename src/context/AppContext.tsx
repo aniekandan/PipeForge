@@ -61,7 +61,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
 
     // Check if launched directly with a .pipeforge or data file via OS file association
-    if (typeof window !== 'undefined' && window.electronAPI?.getInitialFile) {
+    if (typeof window !== 'undefined' && typeof window.electronAPI?.getInitialFile === 'function') {
       window.electronAPI
         .getInitialFile()
         .then((filePath) => {
@@ -69,12 +69,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             viewModel.openFileFromNativePath(filePath);
           }
         })
-        .catch(console.error);
+        .catch(() => {});
     }
 
     // Listen for live file-open events when user double-clicks files while app is open
     let cleanupFileListener: (() => void) | undefined;
-    if (typeof window !== 'undefined' && window.electronAPI?.onOpenFile) {
+    if (typeof window !== 'undefined' && typeof window.electronAPI?.onOpenFile === 'function') {
       cleanupFileListener = window.electronAPI.onOpenFile((filePath) => {
         if (filePath) {
           viewModel.openFileFromNativePath(filePath);

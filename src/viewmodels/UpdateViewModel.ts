@@ -184,17 +184,6 @@ export class UpdateViewModel {
       clearInterval(this._timerId);
       this._timerId = null;
     }
-
-    // Only run background timer for Automatic and AutoCheckManualInstall
-    if (
-      this._updateMode === UpdateMode.Automatic ||
-      this._updateMode === UpdateMode.AutoCheckManualInstall
-    ) {
-      // In applet simulation, run periodic check every 45 seconds
-      this._timerId = setInterval(() => {
-        this.executeBackgroundCheck();
-      }, 45000);
-    }
   }
 
   public destroy(): void {
