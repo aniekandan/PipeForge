@@ -67,7 +67,7 @@ if (!gotTheLock) {
       minHeight: 650,
       title: 'PipeForge',
       backgroundColor: '#f9fbfd',
-      icon: path.join(__dirname, '../public/favicon.ico'),
+      icon: path.join(__dirname, '../dist/favicon.ico'),
       frame: false, // Removes default OS window frame / chrome
       autoHideMenuBar: true, // Hides default OS menu bar
       titleBarStyle: 'hidden', // Uses custom in-app title bar
@@ -75,7 +75,12 @@ if (!gotTheLock) {
         preload: path.join(__dirname, 'preload.cjs'),
         contextIsolation: true,
         nodeIntegration: false,
+        sandbox: false,
       },
+    });
+
+    mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {
+      console.error('Failed to load:', errorCode, errorDescription, validatedURL);
     });
 
     // Provide initial file path to renderer if launched via file association
